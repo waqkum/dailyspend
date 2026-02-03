@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DailySpend</title>
+    <meta name="description" content="Track your daily spending with ease.">
+    <meta name="theme-color" content="#0f0c29">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header / Status -->
+        <header class="app-header">
+            <div class="date-display" id="currentDate">Today</div>
+        </header>
+
+        <!-- Main Budget Ring (Tracker View) -->
+        <main id="trackView" class="main-content active-view">
+            <div class="budget-ring-container">
+                <div class="ring-track"></div>
+                <!-- Conic gradient will be applied here via JS -->
+                <div class="ring-progress" id="budgetRing"></div>
+                <div class="ring-content">
+                    <span class="currency-symbol">$</span>
+                    <span class="amount-remaining" id="remainingAmount">--</span>
+                    <span class="label">Remaining</span>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="stats-row">
+                <div class="stat-item">
+                    <div class="stat-label">Spent</div>
+                    <div class="stat-value" id="spentAmount">$0</div>
+                </div>
+                <div class="stat-item interactive">
+                    <div class="stat-label">Daily Limit <small>(Tap to Edit)</small></div>
+                    <div class="input-wrapper">
+                        <span class="currency-prefix">$</span>
+                        <input type="number" id="limitInput" class="stat-input" value="100">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions Preview -->
+            <div class="recent-list-container">
+                <div class="list-header">
+                    <h3>Recent</h3>
+                    <button id="resetDataBtn" class="text-btn-danger">Reset All</button>
+                </div>
+                <ul class="transaction-list" id="transactionList">
+                    <!-- Items inserted by JS -->
+                </ul>
+            </div>
+        </main>
+
+        <!-- History View -->
+        <main id="historyView" class="main-content" style="display: none;">
+            <div class="history-header">
+                <h2>Spending History</h2>
+                <p>Track your daily performance</p>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-bars" id="historyChart">
+                    <!-- Bars inserted by JS -->
+                </div>
+            </div>
+
+            <div class="history-list-container">
+                <ul class="history-list" id="historyList">
+                    <!-- History items inserted by JS -->
+                </ul>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" id="navTrack">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 6v6l4 2"></path>
+                </svg>
+                <span>Today</span>
+            </button>
+            <button class="nav-item" id="navHistory">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 3v18h18" />
+                    <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3" />
+                </svg>
+                <span>History</span>
+            </button>
+        </nav>
+
+        <!-- Floating Action Button (Only on Track View) -->
+        <button id="addBtn" class="fab" aria-label="Add Expense">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        </button>
+
+        <!-- Add Expense Modal -->
+        <div class="modal" id="addModal">
+            <div class="modal-content glass-panel">
+                <div class="modal-header">
+                    <h2>Add Expense</h2>
+                    <button class="close-btn" id="closeAddModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group large">
+                        <span class="prefix">$</span>
+                        <input type="number" id="expenseAmount" placeholder="0" inputmode="decimal" autofocus>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="expenseNote" placeholder="What was it? (Coffee, Lunch...)"
+                            autocomplete="off">
+                    </div>
+                    <div class="quick-tags" id="quickTags">
+                        <button class="tag" data-val="Food">Food</button>
+                        <button class="tag" data-val="Coffee">Coffee</button>
+                        <button class="tag" data-val="Transport">Transport</button>
+                        <button class="tag" data-val="Groceries">Groceries</button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-primary" id="saveExpenseBtn">Track It</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+    </script>
+</body>
+
+</html>
