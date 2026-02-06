@@ -10,6 +10,7 @@ const els = {
     budgetRing: document.getElementById('budgetRing'),
     remainingAmount: document.getElementById('remainingAmount'),
     spentAmount: document.getElementById('spentAmount'),
+    spentStatBtn: document.getElementById('spentStatBtn'), // New clickable box
     limitInput: document.getElementById('limitInput'),
     transactionList: document.getElementById('transactionList'),
     currentDate: document.getElementById('currentDate'),
@@ -306,13 +307,23 @@ function setupNavigation() {
 
 // Event Listeners
 function setupEventListeners() {
-    // Open Add Modal
+    // Open Add Modal from Button
     els.addBtn.addEventListener('click', () => {
+        openAddModal();
+    });
+
+    // Open Add Modal from Spent Box
+    els.spentStatBtn.addEventListener('click', () => {
+        openAddModal();
+    });
+
+    // Helper to open modal
+    function openAddModal() {
         els.expenseAmount.value = '';
         els.expenseNote.value = '';
         els.addModal.classList.add('active');
         setTimeout(() => els.expenseAmount.focus(), 100);
-    });
+    }
 
     // Close Modals
     els.closeAddModal.addEventListener('click', () => {

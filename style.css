@@ -290,6 +290,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+    /* Prevent squishing */
 }
 
 .ring-track {
@@ -357,6 +359,8 @@ body {
     justify-content: space-between;
     margin-bottom: 30px;
     gap: 16px;
+    flex-shrink: 0;
+    /* Prevent squishing */
 }
 
 .stat-item {
@@ -449,6 +453,21 @@ body {
 
 .text-btn-danger:hover {
     opacity: 1;
+}
+
+/* Clickable Stat Item */
+#spentStatBtn {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#spentStatBtn:hover {
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+#spentStatBtn:active {
+    transform: scale(0.98);
 }
 
 .recent-list-container {
