@@ -3,8 +3,8 @@
   "short_name": "DailySpend",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0b0b15",
-  "theme_color": "#000000",
+  "background_color": "#F7F6EE",
+  "theme_color": "#F7F6EE",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/5501/5501375.png",

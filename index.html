@@ -1,149 +1,255 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DailySpend</title>
-    <meta name="description" content="Track your daily spending with ease.">
-    <meta name="theme-color" content="#0f0c29">
-    <link rel="manifest" href="/manifest.json">
-    <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Daily Spend</title>
+  <meta name="description" content="Track your daily spending.">
+  <meta name="theme-color" content="#F7F6EE">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="style.css?v=6">
 </head>
-
 <body>
-    <div class="app-container">
-        <!-- Header / Status -->
-        <header class="app-header">
-            <div class="date-display" id="currentDate">Today</div>
-        </header>
+<div id="app">
 
-        <!-- Main Budget Ring (Tracker View) -->
-        <main id="trackView" class="main-content active-view">
-            <div class="budget-ring-container">
-                <div class="ring-track"></div>
-                <!-- Conic gradient will be applied here via JS -->
-                <div class="ring-progress" id="budgetRing"></div>
-                <div class="ring-content">
-                    <span class="currency-symbol">$</span>
-                    <span class="amount-remaining" id="remainingAmount">--</span>
-                    <span class="label">Remaining</span>
-                </div>
-            </div>
+  <!-- ─── View: Home ──────────────────────────────────────────────────── -->
+  <div id="home-view" class="view wash-hero active">
+    <div class="grain"></div>
 
-            <!-- Quick Stats -->
-            <div class="stats-row">
-                <div class="stat-item" id="spentStatBtn">
-                    <div class="stat-label">Spent <small>(Tap to Add)</small></div>
-                    <div class="stat-value" id="spentAmount">$0</div>
-                </div>
-                <div class="stat-item interactive">
-                    <div class="stat-label">Daily Limit <small>(Tap to Edit)</small></div>
-                    <div class="input-wrapper">
-                        <span class="currency-prefix">$</span>
-                        <input type="number" id="limitInput" class="stat-input" value="100">
-                    </div>
-                </div>
-            </div>
+    <header class="home-header">
+      <div id="home-logo" class="ds-logo-wrap"></div>
+    </header>
 
-            <!-- Recent Transactions Preview -->
-            <div class="recent-list-container">
-                <div class="list-header">
-                    <h3>Recent</h3>
-                    <button id="resetDataBtn" class="text-btn-danger">Reset All</button>
-                </div>
-                <ul class="transaction-list" id="transactionList">
-                    <!-- Items inserted by JS -->
-                </ul>
-            </div>
-        </main>
-
-        <!-- History View -->
-        <main id="historyView" class="main-content" style="display: none;">
-            <div class="history-header">
-                <h2>Spending History</h2>
-                <p>Track your daily performance</p>
-            </div>
-
-            <div class="chart-container">
-                <div class="chart-bars" id="historyChart">
-                    <!-- Bars inserted by JS -->
-                </div>
-            </div>
-
-            <div class="history-list-container">
-                <ul class="history-list" id="historyList">
-                    <!-- History items inserted by JS -->
-                </ul>
-            </div>
-        </main>
-
-        <!-- Bottom Navigation -->
-        <nav class="bottom-nav">
-            <button class="nav-item active" id="navTrack">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M12 6v6l4 2"></path>
-                </svg>
-                <span>Today</span>
-            </button>
-            <button class="nav-item" id="navHistory">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 3v18h18" />
-                    <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3" />
-                </svg>
-                <span>History</span>
-            </button>
-        </nav>
-
-        <!-- Floating Action Button (Only on Track View) -->
-        <button id="addBtn" class="fab" aria-label="Add Expense">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-        </button>
-
-        <!-- Add Expense Modal -->
-        <div class="modal" id="addModal">
-            <div class="modal-content glass-panel">
-                <div class="modal-header">
-                    <h2>Add Expense</h2>
-                    <button class="close-btn" id="closeAddModal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="input-group large">
-                        <span class="prefix">$</span>
-                        <input type="number" id="expenseAmount" placeholder="0" inputmode="decimal" autofocus>
-                    </div>
-                    <div class="input-group">
-                        <input type="text" id="expenseNote" placeholder="What was it? (Coffee, Lunch...)"
-                            autocomplete="off">
-                    </div>
-                    <div class="quick-tags" id="quickTags">
-                        <button class="tag" data-val="Food">Food</button>
-                        <button class="tag" data-val="Coffee">Coffee</button>
-                        <button class="tag" data-val="Transport">Transport</button>
-                        <button class="tag" data-val="Groceries">Groceries</button>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn-primary" id="saveExpenseBtn">Track It</button>
-                </div>
-            </div>
+    <div class="ring-section">
+      <div class="ring-wrap">
+        <svg id="home-ring-svg" class="home-ring" viewBox="0 0 308 308">
+          <!-- track -->
+          <circle class="ring-track" cx="154" cy="154" r="142"
+            fill="none" stroke="rgba(11,11,11,0.10)" stroke-width="6"/>
+          <!-- fill arc — SVG is CSS-rotated -90deg, so 0deg = visual 12 o'clock -->
+          <circle id="ring-fill" cx="154" cy="154" r="142"
+            fill="none" stroke="var(--ink)" stroke-width="6"
+            stroke-linecap="round"
+            stroke-dasharray="0 892"/>
+          <!-- tip dot -->
+          <circle id="ring-tip" cx="154" cy="12"
+            r="6" fill="var(--accent)" stroke="var(--ink)" stroke-width="1.5"
+            visibility="hidden"/>
+        </svg>
+        <div class="ring-center">
+          <div class="ring-amount-wrap">
+            <span class="ring-dollar">$</span>
+            <span id="home-remaining" class="ring-amount">0</span>
+          </div>
         </div>
+      </div>
+    </div>
+
+    <div class="week-strip">
+      <div class="week-strip-head">
+        <span>This week</span>
+        <span id="week-total-val"></span>
+      </div>
+      <div id="week-bars" class="week-bars-row"></div>
+    </div>
+  </div>
+
+  <!-- ─── View: History ──────────────────────────────────────────────── -->
+  <div id="history-view" class="view wash-hero">
+    <div class="history-header-row">
+      <div class="history-title">History</div>
+      <span id="history-month-label" class="history-month-label"></span>
+    </div>
+    <div class="history-scroll">
+      <div class="month-chart-section">
+        <div class="month-chart-head">
+          <span>30-day spend</span>
+          <span id="history-peak-label"></span>
+        </div>
+        <div id="month-bars" class="month-bars"></div>
+        <div class="month-axis">
+          <span>1</span><span>15</span><span>30</span>
+        </div>
+      </div>
+      <div id="history-filters" class="history-filters"></div>
+      <div id="history-list" class="history-list"></div>
+    </div>
+  </div>
+
+  <!-- ─── View: Settings ─────────────────────────────────────────────── -->
+  <div id="settings-view" class="view wash-hero">
+    <div class="grain"></div>
+    <div class="settings-header-row">
+      <div class="settings-title">Settings</div>
+      <div id="settings-logo" class="ds-logo-wrap"></div>
+    </div>
+    <div class="settings-scroll">
+
+      <div class="settings-section">
+        <div class="settings-section-label">Budget</div>
+        <div class="settings-card">
+          <div class="settings-row" id="settings-limit-row">
+            <span class="settings-row-label">Daily limit</span>
+            <div class="settings-row-right">
+              <span id="settings-limit-val"></span>
+              <svg class="chevron-icon" width="7" height="12" viewBox="0 0 7 12">
+                <path d="M1 1l5 5-5 5" stroke="var(--ink-muted)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+          <div class="settings-row last">
+            <span class="settings-row-label">Currency</span>
+            <div class="settings-row-right">
+              <span>USD · $</span>
+              <svg class="chevron-icon" width="7" height="12" viewBox="0 0 7 12">
+                <path d="M1 1l5 5-5 5" stroke="var(--ink-muted)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-label">Categories</div>
+        <div class="settings-card" id="settings-cats-card"></div>
+        <button class="add-cat-btn" id="add-cat-btn">+ Add category</button>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-label">Appearance</div>
+        <div class="settings-card">
+          <div class="settings-row last" id="settings-color-row">
+            <span class="settings-row-label">Color</span>
+            <div class="settings-row-right">
+              <span id="settings-color-dot" class="color-swatch-dot"></span>
+              <svg class="chevron-icon" width="7" height="12" viewBox="0 0 7 12">
+                <path d="M1 1l5 5-5 5" stroke="var(--ink-muted)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-card">
+          <div class="settings-row last danger" id="settings-reset-row">
+            <span class="settings-row-label">Clear all data</span>
+          </div>
+        </div>
+      </div>
 
     </div>
-    <script src="app.js"></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js');
-        }
-    </script>
-</body>
+  </div>
 
+  <!-- ─── Bottom dock (shared) ───────────────────────────────────────── -->
+  <div id="bottom-dock">
+    <div class="nav-pill">
+      <button class="nav-glyph active" data-view="home">
+        <svg width="14" height="14" viewBox="0 0 14 14">
+          <circle cx="7" cy="7" r="3" fill="currentColor"/>
+        </svg>
+      </button>
+      <button class="nav-glyph" data-view="history">
+        <svg width="14" height="14" viewBox="0 0 14 14">
+          <g fill="currentColor">
+            <rect x="2" y="9" width="2.5" height="3" rx="0.5"/>
+            <rect x="6" y="6" width="2.5" height="6" rx="0.5"/>
+            <rect x="10" y="3" width="2.5" height="9" rx="0.5"/>
+          </g>
+        </svg>
+      </button>
+      <button class="nav-glyph" data-view="settings">
+        <svg width="14" height="14" viewBox="0 0 14 14">
+          <g fill="none" stroke="currentColor" stroke-width="1.4">
+            <circle cx="7" cy="7" r="2.2"/>
+            <path d="M7 1v1.6M7 11.4V13M11.2 7H13M1 7h1.8M10 4l1.1-1.1M2.9 11.1L4 10M10 10l1.1 1.1M2.9 2.9L4 4"/>
+          </g>
+        </svg>
+      </button>
+    </div>
+    <div class="add-btn-wrap" id="add-btn-wrap">
+      <div class="add-btn-halo"></div>
+      <button class="add-btn" id="add-btn">
+        <div class="add-btn-gloss"></div>
+        <svg width="14" height="14" viewBox="0 0 14 14" style="position:relative">
+          <path d="M7 1v12M1 7h12" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span style="position:relative">Add expense</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ─── Overlay: Add expense sheet ─────────────────────────────────── -->
+  <div id="add-overlay" class="overlay">
+    <div class="overlay-backdrop" id="add-backdrop"></div>
+    <div class="add-sheet">
+      <div class="sheet-grabber"></div>
+      <div class="sheet-header">
+        <span class="sheet-label">New expense</span>
+        <span id="sheet-remaining" class="sheet-remaining"></span>
+      </div>
+      <div class="sheet-amount">
+        <div class="amount-display">
+          <span class="amount-dollar">$</span>
+          <span id="sheet-amount-val">0</span>
+          <span class="amount-cursor"></span>
+        </div>
+      </div>
+      <div id="category-chips" class="category-chips"></div>
+      <div id="numpad" class="numpad"></div>
+      <button class="track-btn" id="track-btn">Track it — $0.00</button>
+    </div>
+  </div>
+
+  <!-- ─── Overlay: Edit daily limit ──────────────────────────────────── -->
+  <div id="edit-limit-overlay" class="overlay">
+    <div class="overlay-backdrop" id="edit-limit-backdrop"></div>
+    <div class="glass-modal">
+      <div class="glass-gloss"></div>
+      <div style="position:relative">
+        <div class="edit-limit-label">Daily limit</div>
+        <div class="edit-limit-amount-row">
+          <span class="edit-limit-dollar">$</span>
+          <span id="edit-limit-display">50</span>
+          <span class="amount-cursor" style="height:48px"></span>
+          <span id="edit-limit-was" class="edit-limit-was"></span>
+        </div>
+        <div id="limit-presets" class="limit-presets"></div>
+        <div class="modal-actions">
+          <button class="btn-ghost" id="edit-limit-cancel">Cancel</button>
+          <button class="btn-ink" id="edit-limit-save">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Overlay: Color picker ──────────────────────────────────────── -->
+  <div id="color-overlay" class="overlay">
+    <div class="overlay-backdrop" id="color-backdrop"></div>
+    <div class="glass-modal">
+      <div class="glass-gloss"></div>
+      <div style="position:relative">
+        <div class="color-modal-header">
+          <span class="color-modal-title">Color</span>
+        </div>
+        <div class="accent-section-label">Accent</div>
+        <div id="accent-swatches" class="accent-swatches"></div>
+        <div class="modal-actions">
+          <button class="btn-ghost" id="color-cancel">Cancel</button>
+          <button class="btn-ink" id="color-save">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<script src="app.js?v=6"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js');
+  }
+</script>
+</body>
 </html>
