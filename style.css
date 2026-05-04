@@ -623,7 +623,7 @@ body {
   opacity: 0.62;
   line-height: 1;
   letter-spacing: -0.01em;
-  margin-top: -5px; /* optical correction: "+" crossbar sits low in the em box */
+  margin-top: -2px; /* slight optical lift — crossbar sits low in SF Pro; neutral on Roboto */
 }
 [data-theme="dark"] #sheet-tab {
   background: linear-gradient(
