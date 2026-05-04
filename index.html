@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#F7F6EE">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="manifest" href="/manifest.json">
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="style.css?v=21">
 </head>
 <body>
 <div id="app">
@@ -18,41 +18,57 @@
     <div class="grain"></div>
 
     <header class="home-header">
-      <div id="home-logo" class="ds-logo-wrap"></div>
+      <span class="home-title">Daily Spend</span>
     </header>
 
-    <div class="ring-section">
-      <div class="ring-wrap">
-        <svg id="home-ring-svg" class="home-ring" viewBox="0 0 308 308">
-          <!-- track -->
-          <circle class="ring-track" cx="154" cy="154" r="142"
-            fill="none" stroke="rgba(11,11,11,0.10)" stroke-width="6"/>
-          <!-- fill arc — SVG is CSS-rotated -90deg, so 0deg = visual 12 o'clock -->
-          <circle id="ring-fill" cx="154" cy="154" r="142"
-            fill="none" stroke="var(--ink)" stroke-width="6"
-            stroke-linecap="round"
-            stroke-dasharray="0 892"/>
-          <!-- tip dot -->
-          <circle id="ring-tip" cx="154" cy="12"
-            r="6" fill="var(--accent)" stroke="var(--ink)" stroke-width="1.5"
-            visibility="hidden"/>
-        </svg>
-        <div class="ring-center">
-          <div class="ring-amount-wrap">
-            <span class="ring-dollar">$</span>
-            <span id="home-remaining" class="ring-amount">0</span>
+    <div class="ring-spacer-top"></div>
+
+    <div class="ring-zone">
+      <div class="ring-section">
+        <div class="ring-wrap">
+          <svg id="home-ring-svg" class="home-ring" viewBox="0 0 308 308">
+            <!-- track -->
+            <circle class="ring-track" cx="154" cy="154" r="142"
+              fill="none" stroke="rgba(11,11,11,0.10)" stroke-width="6"/>
+            <!-- fill arc — SVG is CSS-rotated -90deg, so 0deg = visual 12 o'clock -->
+            <circle id="ring-fill" cx="154" cy="154" r="142"
+              fill="none" stroke="var(--ink)" stroke-width="6"
+              stroke-linecap="round"
+              stroke-dasharray="0 892"/>
+            <!-- tip dot -->
+            <circle id="ring-tip" cx="154" cy="12"
+              r="6" fill="var(--accent)" stroke="var(--ink)" stroke-width="1.5"
+              visibility="hidden"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-amount-wrap">
+              <span id="ring-dollar" class="ring-dollar">$</span>
+              <span id="home-remaining" class="ring-amount">0</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="week-strip">
-      <div class="week-strip-head">
-        <span>This week</span>
-        <span id="week-total-val"></span>
-      </div>
-      <div id="week-bars" class="week-bars-row"></div>
+    <div class="limit-row">
+      <button class="limit-badge" id="limit-badge">
+        <span id="limit-badge-val">$50</span>
+        <span class="limit-badge-label">limit</span>
+        <svg class="chevron-icon" width="5" height="9" viewBox="0 0 7 12">
+          <path d="M1 1l5 5-5 5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        </svg>
+      </button>
     </div>
+
+    <div class="today-section" id="today-section">
+      <div class="today-section-head">
+        <span>Today</span>
+        <span id="today-total-val"></span>
+      </div>
+      <div id="today-list" class="today-list"></div>
+    </div>
+
+    <div class="ring-spacer-bot"></div>
   </div>
 
   <!-- ─── View: History ──────────────────────────────────────────────── -->
@@ -64,13 +80,11 @@
     <div class="history-scroll">
       <div class="month-chart-section">
         <div class="month-chart-head">
-          <span>30-day spend</span>
+          <span>Last 7 days</span>
           <span id="history-peak-label"></span>
         </div>
-        <div id="month-bars" class="month-bars"></div>
-        <div class="month-axis">
-          <span>1</span><span>15</span><span>30</span>
-        </div>
+        <div id="month-bars" class="month-bars week-mode"></div>
+        <div id="month-axis" class="month-axis"></div>
       </div>
       <div id="history-filters" class="history-filters"></div>
       <div id="history-list" class="history-list"></div>
@@ -82,7 +96,6 @@
     <div class="grain"></div>
     <div class="settings-header-row">
       <div class="settings-title">Settings</div>
-      <div id="settings-logo" class="ds-logo-wrap"></div>
     </div>
     <div class="settings-scroll">
 
@@ -98,10 +111,10 @@
               </svg>
             </div>
           </div>
-          <div class="settings-row last">
+          <div class="settings-row last" id="settings-currency-row">
             <span class="settings-row-label">Currency</span>
             <div class="settings-row-right">
-              <span>USD · $</span>
+              <span id="settings-currency-val">USD · $</span>
               <svg class="chevron-icon" width="7" height="12" viewBox="0 0 7 12">
                 <path d="M1 1l5 5-5 5" stroke="var(--ink-muted)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
               </svg>
@@ -142,42 +155,35 @@
     </div>
   </div>
 
+  <!-- ─── Sheet tab (drag/tap to open add sheet) ────────────────────── -->
+  <div id="sheet-tab">
+    <span class="sheet-tab-plus">+</span>
+  </div>
+
   <!-- ─── Bottom dock (shared) ───────────────────────────────────────── -->
   <div id="bottom-dock">
-    <div class="nav-pill">
-      <button class="nav-glyph active" data-view="home">
-        <svg width="14" height="14" viewBox="0 0 14 14">
-          <circle cx="7" cy="7" r="3" fill="currentColor"/>
-        </svg>
-      </button>
-      <button class="nav-glyph" data-view="history">
-        <svg width="14" height="14" viewBox="0 0 14 14">
-          <g fill="currentColor">
-            <rect x="2" y="9" width="2.5" height="3" rx="0.5"/>
-            <rect x="6" y="6" width="2.5" height="6" rx="0.5"/>
-            <rect x="10" y="3" width="2.5" height="9" rx="0.5"/>
-          </g>
-        </svg>
-      </button>
-      <button class="nav-glyph" data-view="settings">
-        <svg width="14" height="14" viewBox="0 0 14 14">
-          <g fill="none" stroke="currentColor" stroke-width="1.4">
-            <circle cx="7" cy="7" r="2.2"/>
-            <path d="M7 1v1.6M7 11.4V13M11.2 7H13M1 7h1.8M10 4l1.1-1.1M2.9 11.1L4 10M10 10l1.1 1.1M2.9 2.9L4 4"/>
-          </g>
-        </svg>
-      </button>
-    </div>
-    <div class="add-btn-wrap" id="add-btn-wrap">
-      <div class="add-btn-halo"></div>
-      <button class="add-btn" id="add-btn">
-        <div class="add-btn-gloss"></div>
-        <svg width="14" height="14" viewBox="0 0 14 14" style="position:relative">
-          <path d="M7 1v12M1 7h12" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        <span style="position:relative">Add expense</span>
-      </button>
-    </div>
+    <button class="nav-glyph active" data-view="home">
+      <svg width="14" height="14" viewBox="0 0 14 14">
+        <circle cx="7" cy="7" r="3" fill="currentColor"/>
+      </svg>
+    </button>
+    <button class="nav-glyph" data-view="history">
+      <svg width="14" height="14" viewBox="0 0 14 14">
+        <g fill="currentColor">
+          <rect x="2" y="9" width="2.5" height="3" rx="0.5"/>
+          <rect x="6" y="6" width="2.5" height="6" rx="0.5"/>
+          <rect x="10" y="3" width="2.5" height="9" rx="0.5"/>
+        </g>
+      </svg>
+    </button>
+    <button class="nav-glyph" data-view="settings">
+      <svg width="14" height="14" viewBox="0 0 14 14">
+        <g fill="none" stroke="currentColor" stroke-width="1.4">
+          <circle cx="7" cy="7" r="2.2"/>
+          <path d="M7 1v1.6M7 11.4V13M11.2 7H13M1 7h1.8M10 4l1.1-1.1M2.9 11.1L4 10M10 10l1.1 1.1M2.9 2.9L4 4"/>
+        </g>
+      </svg>
+    </button>
   </div>
 
   <!-- ─── Overlay: Add expense sheet ─────────────────────────────────── -->
@@ -185,10 +191,6 @@
     <div class="overlay-backdrop" id="add-backdrop"></div>
     <div class="add-sheet">
       <div class="sheet-grabber"></div>
-      <div class="sheet-header">
-        <span class="sheet-label">New expense</span>
-        <span id="sheet-remaining" class="sheet-remaining"></span>
-      </div>
       <div class="sheet-amount">
         <div class="amount-display">
           <span class="amount-dollar">$</span>
@@ -243,9 +245,27 @@
     </div>
   </div>
 
+  <!-- ─── Overlay: Currency picker ─────────────────────────────────────── -->
+  <div id="currency-overlay" class="overlay">
+    <div class="overlay-backdrop" id="currency-backdrop"></div>
+    <div class="glass-modal">
+      <div class="glass-gloss"></div>
+      <div style="position:relative">
+        <div class="color-modal-header">
+          <span class="color-modal-title">Currency</span>
+        </div>
+        <div id="currency-options" class="currency-options"></div>
+        <div class="modal-actions">
+          <button class="btn-ghost" id="currency-cancel">Cancel</button>
+          <button class="btn-ink" id="currency-save">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div><!-- #app -->
 
-<script src="app.js?v=6"></script>
+<script src="app.js?v=18"></script>
 <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js');
