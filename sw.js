@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dailyspend-v17';
+const CACHE_NAME = 'dailyspend-v18';
 const ASSETS = [
     './',
     './index.html',

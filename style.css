@@ -872,15 +872,17 @@ body {
 .category-chips {
   display: flex;
   gap: 6px;
-  justify-content: flex-start;
   align-items: center;
   flex-wrap: nowrap;
   overflow-x: auto;
-  padding: 0 22px 2px;
-  scroll-padding-inline: 22px;
+  padding: 0 0 2px;   /* sheet already provides 22px horizontal padding */
+  scrollbar-width: none;
 }
+.category-chips::-webkit-scrollbar { display: none; }
 .cat-chip {
-  padding: 8px 12px;
+  flex: 1 0 0;        /* grow equally from zero; scroll kicks in below min-width */
+  min-width: 60px;
+  padding: 8px 8px;
   border-radius: var(--r-pill);
   border: 1.5px solid var(--ink);
   background: transparent;
@@ -888,6 +890,9 @@ body {
   font-weight: var(--fw-bold);
   color: var(--ink);
   white-space: nowrap;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition: background var(--dur-fast) var(--ease-ui);
 }
 .cat-chip.active { background: var(--accent); }
