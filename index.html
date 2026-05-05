@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#F7F6EE">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="manifest" href="/manifest.json">
-  <link rel="stylesheet" href="style.css?v=22">
+  <link rel="stylesheet" href="style.css?v=24">
 </head>
 <body>
 <div id="app">
@@ -35,6 +35,12 @@
               fill="none" stroke="var(--ink)" stroke-width="6"
               stroke-linecap="round"
               stroke-dasharray="0 892"/>
+            <!-- overflow arc — shown in red when spending exceeds limit -->
+            <circle id="ring-overflow" cx="154" cy="154" r="142"
+              fill="none" stroke="#c0392b" stroke-width="6"
+              stroke-linecap="round"
+              stroke-dasharray="0 892"
+              visibility="hidden"/>
             <!-- tip dot -->
             <circle id="ring-tip" cx="154" cy="12"
               r="6" fill="var(--accent)" stroke="var(--ink)" stroke-width="1.5"
@@ -43,7 +49,7 @@
           <div class="ring-center">
             <div class="ring-amount-wrap">
               <span id="ring-dollar" class="ring-dollar">$</span>
-              <span id="home-remaining" class="ring-amount">0</span>
+              <span id="home-remaining" class="ring-amount">0</span><span id="home-remaining-cents" class="ring-cents"></span>
             </div>
           </div>
         </div>
@@ -213,11 +219,9 @@
         <div class="edit-limit-label">Daily limit</div>
         <div class="edit-limit-amount-row">
           <span class="edit-limit-dollar">$</span>
-          <span id="edit-limit-display">50</span>
-          <span class="amount-cursor" style="height:48px"></span>
+          <input id="edit-limit-input" class="edit-limit-input" type="number" min="1" max="99999" inputmode="decimal">
           <span id="edit-limit-was" class="edit-limit-was"></span>
         </div>
-        <div id="limit-presets" class="limit-presets"></div>
         <div class="modal-actions">
           <button class="btn-ghost" id="edit-limit-cancel">Cancel</button>
           <button class="btn-ink" id="edit-limit-save">Save</button>
@@ -265,7 +269,7 @@
 
 </div><!-- #app -->
 
-<script src="app.js?v=18"></script>
+<script src="app.js?v=20"></script>
 <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js');

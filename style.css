@@ -467,6 +467,17 @@ body {
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
 }
+.ring-cents {
+  font-size: 36px;
+  line-height: 1;
+  font-weight: var(--fw-regular);
+  letter-spacing: -0.03em;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  align-self: flex-end;   /* subscript: sits at the bottom of the 108px number */
+  margin-bottom: 10px;    /* lift slightly off the baseline */
+}
 
 /* ─── Today section (home) ──────────────────────────────────────────────── */
 .today-section {
@@ -986,14 +997,23 @@ body {
   align-self: flex-start;
   margin-top: 12px;
 }
-#edit-limit-display {
+.edit-limit-input {
   font-size: 72px;
   line-height: 0.95;
   font-weight: var(--fw-regular);
   letter-spacing: -0.045em;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
+  background: none;
+  border: none;
+  outline: none;
+  padding: 0;
+  width: 5ch;
+  min-width: 0;
+  -moz-appearance: textfield;
 }
+.edit-limit-input::-webkit-inner-spin-button,
+.edit-limit-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .edit-limit-was {
   font-size: 11px;
   color: var(--ink-muted);
@@ -1001,12 +1021,49 @@ body {
   align-self: center;
   margin-left: auto;
 }
-.limit-presets {
+/* ─── Category delete button ─────────────────────────────────────────────── */
+.cat-delete-btn {
+  background: none;
+  border: none;
+  padding: 6px;
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-bottom: 18px;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-muted);
+  opacity: 0.40;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: opacity var(--dur-fast) var(--ease-ui), color var(--dur-fast) var(--ease-ui),
+              background var(--dur-fast) var(--ease-ui);
 }
+.cat-delete-btn:hover { opacity: 1; color: #c0392b; background: rgba(192,57,43,0.08); }
+.cat-delete-btn:active { opacity: 0.7; }
+
+/* ─── Category delete inline confirmation ────────────────────────────────── */
+.cat-confirm-cancel,
+.cat-confirm-delete {
+  border: none;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.3px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: opacity var(--dur-fast) var(--ease-ui);
+}
+.cat-confirm-cancel {
+  background: var(--surface-alt);
+  color: var(--ink-muted);
+  margin-right: 6px;
+}
+.cat-confirm-delete {
+  background: #c0392b;
+  color: #fff;
+}
+.cat-confirm-cancel:active,
+.cat-confirm-delete:active { opacity: 0.7; }
+
+.limit-presets { display: none; }
 .limit-preset {
   padding: 8px 14px;
   border-radius: var(--r-pill);

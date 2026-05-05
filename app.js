@@ -9,7 +9,6 @@ const DEFAULT_CATEGORIES = [
 ];
 
 const ACCENT_OPTIONS = ['#EEF4B0', '#C9F2A0', '#F4C8B0', '#B0D4F4', '#E8B0F4', '#0B0B0B'];
-const LIMIT_PRESETS  = [30, 40, 50, 60, 75, 100];
 const CURRENCIES = [
   { code: 'USD', symbol: '$',  label: 'USD — $  US Dollar' },
   { code: 'EUR', symbol: '€',  label: 'EUR — €  Euro' },
@@ -104,7 +103,13 @@ function fmtTime(isoStr) {
 
 // ─── Money helpers ────────────────────────────────────────────────────────
 function centsToDisplay(cents) {
-  return (cents / 100).toFixed(2);
+  const abs     = Math.abs(cents);
+  const dollars = Math.floor(abs / 100);
+  const rem     = abs % 100;
+  const sign    = cents < 0 ? '-' : '';
+  return rem === 0
+    ? `${sign}${dollars}`
+    : `${sign}${dollars}.${String(rem).padStart(2, '0')}`;
 }
 
 function fmt(cents) {
@@ -182,15 +187,17 @@ let _prevRemainingCents = null;
 
 function animateCounter(el, fromCents, toCents, duration = 500) {
   const fromVal = Math.round(fromCents / 100);
-  const toVal   = Math.round(toCents  / 100);
+  // Use truncation so the animated integer never disagrees with the cents element
+  const absTo   = Math.abs(toCents);
+  const toVal   = Math.floor(absTo / 100) * (toCents < 0 ? -1 : 1);
   if (fromVal === toVal) { el.textContent = toVal; return; }
   const start = performance.now();
   const tick = (now) => {
-    const p = Math.min((now - start) / duration, 1);
-    const eased = 1 - Math.pow(2, -10 * p); // ease-out-expo
+    const p     = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(2, -10 * p);
     el.textContent = Math.round(fromVal + (toVal - fromVal) * eased);
     if (p < 1) requestAnimationFrame(tick);
-    else el.textContent = toVal;
+    else        el.textContent = toVal;
   };
   requestAnimationFrame(tick);
 }
@@ -294,6 +301,48 @@ function easeOutExpo(t) {
   return t >= 1 ? 1 : 1 - Math.pow(2, -10 * t);
 }
 
+// Draws both fill and overflow arcs for a given total dash length (can exceed RING_C).
+function setRingArcs(totalDash) {
+  const fillDash     = Math.min(totalDash, RING_C);
+  const overflowDash = Math.max(0, totalDash - RING_C);
+  const isOver       = overflowDash > 0;
+
+  const ringFill     = document.getElementById('ring-fill');
+  const ringOverflow = document.getElementById('ring-overflow');
+  const ringTip      = document.getElementById('ring-tip');
+
+  if (ringFill) {
+    if (fillDash < 4) {
+      ringFill.style.stroke = 'transparent';
+    } else {
+      ringFill.style.stroke = '';
+      ringFill.setAttribute('stroke-dasharray', `${fillDash} ${RING_C}`);
+    }
+  }
+
+  if (ringOverflow) {
+    if (overflowDash < 4) {
+      ringOverflow.setAttribute('visibility', 'hidden');
+    } else {
+      ringOverflow.setAttribute('visibility', 'visible');
+      ringOverflow.setAttribute('stroke-dasharray', `${overflowDash} ${RING_C}`);
+    }
+  }
+
+  if (ringTip) {
+    if (totalDash > 4) {
+      const angle = 2 * Math.PI * (totalDash / RING_C);
+      ringTip.setAttribute('cx', 154 + 142 * Math.cos(angle));
+      ringTip.setAttribute('cy', 154 + 142 * Math.sin(angle));
+      ringTip.setAttribute('fill', isOver ? '#c0392b' : getAccent());
+      ringTip.setAttribute('stroke', isOver ? '#7a1a10' : 'var(--ink)');
+      ringTip.setAttribute('visibility', 'visible');
+    } else {
+      ringTip.setAttribute('visibility', 'hidden');
+    }
+  }
+}
+
 function animateRingFill(targetDash) {
   if (_ringAnimFrame) cancelAnimationFrame(_ringAnimFrame);
   const startDash = _ringCurrentDash;
@@ -301,37 +350,10 @@ function animateRingFill(targetDash) {
   const duration  = 1000; // ms — long, heavily smoothed
 
   function step(now) {
-    const t      = Math.min(1, (now - startTime) / duration);
-    const eased  = easeOutExpo(t);
-    const dash   = startDash + (targetDash - startDash) * eased;
-
+    const t    = Math.min(1, (now - startTime) / duration);
+    const dash = startDash + (targetDash - startDash) * easeOutExpo(t);
     _ringCurrentDash = dash;
-
-    const ringFill = document.getElementById('ring-fill');
-    const ringTip  = document.getElementById('ring-tip');
-
-    if (ringFill) {
-      if (dash < 4) {
-        ringFill.style.stroke = 'transparent';
-      } else {
-        ringFill.style.stroke = '';
-        ringFill.setAttribute('stroke-dasharray', `${dash} ${RING_C}`);
-      }
-    }
-
-    if (ringTip) {
-      if (targetDash > 4) {
-        const pct   = dash / RING_C;
-        const angle = 2 * Math.PI * pct;
-        ringTip.setAttribute('cx', 154 + 142 * Math.cos(angle));
-        ringTip.setAttribute('cy', 154 + 142 * Math.sin(angle));
-        ringTip.setAttribute('fill', getAccent());
-        ringTip.setAttribute('visibility', 'visible');
-      } else {
-        ringTip.setAttribute('visibility', 'hidden');
-      }
-    }
-
+    setRingArcs(dash);
     if (t < 1) {
       _ringAnimFrame = requestAnimationFrame(step);
     } else {
@@ -348,7 +370,7 @@ function renderHome() {
   const todayCents    = entries.reduce((s, e) => s + e.amount, 0);
   const limitCents    = state.dailyLimit * 100;
   const remainingCents = limitCents - todayCents;
-  const pct = Math.max(0, Math.min(1, todayCents / limitCents));
+  const pct = Math.max(0, todayCents / limitCents); // unclamped — can exceed 1 when over limit
 
   // Limit badge
   const badgeVal = document.getElementById('limit-badge-val');
@@ -358,48 +380,48 @@ function renderHome() {
   const ringDollar = document.getElementById('ring-dollar');
   if (ringDollar) ringDollar.textContent = state.currencySymbol;
 
-  // Ring fill arc
-  const dash = RING_C * pct;
+  // Ring fill arc (totalDash can exceed RING_C when over limit)
+  const totalDash = RING_C * pct;
   if (_animateRingNext) {
     _animateRingNext = false;
-    animateRingFill(dash);
+    animateRingFill(totalDash);
   } else {
     // Instant set (page load, view switch, reset, etc.)
     if (_ringAnimFrame) { cancelAnimationFrame(_ringAnimFrame); _ringAnimFrame = null; }
-    _ringCurrentDash = dash;
-    const ringFill = document.getElementById('ring-fill');
-    const ringTip  = document.getElementById('ring-tip');
-    if (ringFill) {
-      if (pct < 0.005) {
-        ringFill.style.stroke = 'transparent';
-      } else {
-        ringFill.style.stroke = '';
-        ringFill.setAttribute('stroke-dasharray', `${dash} ${RING_C}`);
-      }
-    }
-    if (ringTip) {
-      if (pct > 0.005) {
-        const angle = 2 * Math.PI * pct;
-        ringTip.setAttribute('cx', 154 + 142 * Math.cos(angle));
-        ringTip.setAttribute('cy', 154 + 142 * Math.sin(angle));
-        ringTip.setAttribute('fill', getAccent());
-        ringTip.setAttribute('visibility', 'visible');
-      } else {
-        ringTip.setAttribute('visibility', 'hidden');
-      }
+    _ringCurrentDash = totalDash;
+    if (pct < 0.005) {
+      const ringFill = document.getElementById('ring-fill');
+      if (ringFill) ringFill.style.stroke = 'transparent';
+      const ringTip = document.getElementById('ring-tip');
+      if (ringTip) ringTip.setAttribute('visibility', 'hidden');
+      const ringOverflow = document.getElementById('ring-overflow');
+      if (ringOverflow) ringOverflow.setAttribute('visibility', 'hidden');
+    } else {
+      setRingArcs(totalDash);
     }
   }
 
-  // Remaining amount — animated counter
-  const remEl = document.getElementById('home-remaining');
+  // Remaining amount — animated dollar integer + static cents
+  const remEl    = document.getElementById('home-remaining');
+  const centsEl  = document.getElementById('home-remaining-cents');
   if (remEl) {
+    const absRem   = Math.abs(remainingCents);
+    const dollars  = Math.floor(absRem / 100);
+    const centPart = absRem % 100;
+    const sign     = remainingCents < 0 ? '-' : '';
+
     const prev = _prevRemainingCents;
     if (prev !== null && prev !== remainingCents) {
       animateCounter(remEl, prev, remainingCents);
     } else {
-      remEl.textContent = Math.round(remainingCents / 100);
+      remEl.textContent = sign + dollars;
     }
     _prevRemainingCents = remainingCents;
+
+    // Cents: always set immediately (no animation needed)
+    if (centsEl) {
+      centsEl.textContent = centPart > 0 ? '.' + String(centPart).padStart(2, '0') : '';
+    }
   }
 
   // Today's total
@@ -643,10 +665,31 @@ function renderSettings() {
       row.innerHTML = `
         <span class="settings-row-label">${c.label}</span>
         <div class="settings-row-right">
-          <svg class="chevron-icon" width="7" height="12" viewBox="0 0 7 12">
-            <path d="M1 1l5 5-5 5" stroke="var(--ink-muted)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-          </svg>
+          <button class="cat-delete-btn" aria-label="Remove ${c.label}">
+            <svg width="12" height="12" viewBox="0 0 14 14">
+              <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
         </div>`;
+      row.querySelector('.cat-delete-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Swap row into inline confirmation state
+        const labelEl = row.querySelector('.settings-row-label');
+        const rightEl = row.querySelector('.settings-row-right');
+        labelEl.textContent = `Delete "${c.label}"?`;
+        labelEl.style.color = 'var(--ink-muted)';
+        rightEl.innerHTML = `
+          <button class="cat-confirm-cancel">Cancel</button>
+          <button class="cat-confirm-delete">Delete</button>`;
+        rightEl.querySelector('.cat-confirm-cancel').addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          renderSettings();
+        });
+        rightEl.querySelector('.cat-confirm-delete').addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          deleteCategory(c.id);
+        });
+      });
       catsCard.appendChild(row);
     });
   }
@@ -675,14 +718,7 @@ function renderAddSheet() {
       chipsEl.appendChild(chip);
     });
 
-    // "+" chip for adding custom category
-    const addChip = document.createElement('button');
-    addChip.className = 'cat-chip-add';
-    addChip.innerHTML = `<svg width="12" height="12" viewBox="0 0 14 14">
-      <path d="M7 1v12M1 7h12" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/>
-    </svg>`;
-    addChip.addEventListener('click', promptAddCategory);
-    chipsEl.appendChild(addChip);
+    // (no inline add chip — categories are managed in Settings)
   }
 }
 
@@ -775,26 +811,15 @@ function handleNumpadKey(k) {
   renderAddSheet();
 }
 
-// ─── Edit limit presets ───────────────────────────────────────────────────
-function buildLimitPresets() {
-  const el = document.getElementById('limit-presets');
-  if (!el) return;
-  el.innerHTML = '';
-  LIMIT_PRESETS.forEach(v => {
-    const chip = document.createElement('button');
-    chip.className = 'limit-preset' + (ui.editLimitVal === v ? ' active' : '');
-    chip.textContent = '$' + v;
-    chip.addEventListener('click', () => {
-      ui.editLimitVal = v;
-      const display = document.getElementById('edit-limit-display');
-      if (display) display.textContent = v;
-      // Refresh active states
-      el.querySelectorAll('.limit-preset').forEach(c => {
-        c.classList.toggle('active', parseInt(c.textContent.slice(1)) === v);
-      });
-    });
-    el.appendChild(chip);
-  });
+// ─── Category delete ──────────────────────────────────────────────────────
+function deleteCategory(id) {
+  state.categories = state.categories.filter(c => c.id !== id);
+  // Null out categoryId on any existing entries that used this category
+  state.entries = state.entries.map(e =>
+    e.categoryId === id ? { ...e, categoryId: null } : e
+  );
+  saveState();
+  renderSettings();
 }
 
 // ─── Accent swatches ──────────────────────────────────────────────────────
@@ -920,21 +945,29 @@ function saveExpense() {
 // ─── Edit limit flow ──────────────────────────────────────────────────────
 function openEditLimit() {
   ui.editLimitVal = state.dailyLimit;
-  const display = document.getElementById('edit-limit-display');
-  if (display) display.textContent = state.dailyLimit;
+  const inputEl = document.getElementById('edit-limit-input');
+  if (inputEl) {
+    inputEl.value = state.dailyLimit;
+    // Auto-focus and select so user can type immediately
+    setTimeout(() => { inputEl.focus(); inputEl.select(); }, 80);
+  }
   const wasEl = document.getElementById('edit-limit-was');
   if (wasEl) wasEl.textContent = '';
-  buildLimitPresets();
   openOverlay('edit-limit-overlay');
 }
 
 function closeEditLimit() {
+  // Blur input to dismiss keyboard on mobile
+  const inputEl = document.getElementById('edit-limit-input');
+  if (inputEl) inputEl.blur();
   closeOverlay('edit-limit-overlay');
 }
 
 function saveLimit() {
-  if (ui.editLimitVal > 0) {
-    state.dailyLimit = ui.editLimitVal;
+  const inputEl = document.getElementById('edit-limit-input');
+  const val = inputEl ? parseInt(inputEl.value, 10) : ui.editLimitVal;
+  if (val > 0) {
+    state.dailyLimit = val;
     _prevRemainingCents = null; // reset counter so it doesn't animate from stale value
     saveState();
     renderHome();
@@ -1048,6 +1081,10 @@ function setupEvents() {
   document.getElementById('edit-limit-backdrop').addEventListener('click', closeEditLimit);
   document.getElementById('edit-limit-cancel').addEventListener('click', closeEditLimit);
   document.getElementById('edit-limit-save').addEventListener('click', saveLimit);
+  document.getElementById('edit-limit-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter')  saveLimit();
+    if (e.key === 'Escape') closeEditLimit();
+  });
 
   // Color picker
   document.getElementById('settings-color-row').addEventListener('click', openColorPicker);

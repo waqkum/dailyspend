@@ -1,10 +1,13 @@
-const CACHE_NAME = 'dailyspend-v14';
+const CACHE_NAME = 'dailyspend-v17';
 const ASSETS = [
     './',
     './index.html',
     './style.css',
     './app.js',
-    './manifest.json'
+    './manifest.json',
+    './icon-192.png',
+    './icon-512.png',
+    './icon-512-maskable.png'
 ];
 
 self.addEventListener('install', (e) => {
