@@ -798,6 +798,9 @@ body {
 }
 .overlay.active { display: block; }
 
+/* Custom label modal always floats above other overlays (e.g. edit-entry-sheet) */
+#custom-cat-overlay { z-index: 200; }
+
 .overlay-backdrop {
   position: absolute;
   inset: 0;
@@ -946,6 +949,82 @@ body {
   flex-shrink: 0;
 }
 .track-btn:active { opacity: 0.8; }
+
+/* ─── + chip (circular) ──────────────────────────────────────────────────── */
+.cat-chip-plus {
+  flex: 0 0 33px;
+  width: 33px;
+  height: 33px;
+  min-width: unset;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Custom one-time label input ────────────────────────────────────────── */
+.custom-cat-input {
+  display: block;
+  width: 100%;
+  font-size: 28px;
+  line-height: 1.2;
+  font-weight: var(--fw-regular);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  background: none;
+  border: none;
+  border-bottom: 1.5px solid rgba(11,11,11,0.25);
+  outline: none;
+  padding: 4px 0 8px;
+  margin: 6px 0 4px;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+}
+.custom-cat-input::placeholder { color: var(--ink-subtle); }
+
+/* ─── Edit entry sheet ───────────────────────────────────────────────────── */
+.edit-entry-sheet {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  background: var(--cream);
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  padding: 10px 22px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 -20px 40px rgba(0,0,0,0.18);
+  transform: translateY(100%);
+  transition: transform 420ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.overlay.active .edit-entry-sheet { transform: translateY(0); }
+
+.edit-entry-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.edit-entry-actions .track-btn { flex: 1; }
+.edit-delete-btn {
+  flex-shrink: 0;
+  padding: 16px 18px;
+  border-radius: var(--r-pill);
+  background: transparent;
+  border: 1.5px solid rgba(192,57,43,0.35);
+  color: #c0392b;
+  font-weight: var(--fw-bold);
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: opacity var(--dur-fast) var(--ease-ui),
+              background var(--dur-fast) var(--ease-ui);
+}
+.edit-delete-btn:active { opacity: 0.7; }
+
+/* ─── Today entries: tappable ────────────────────────────────────────────── */
+.today-entry { cursor: pointer; }
+.today-entry:active { opacity: 0.6; }
 
 /* ─── Glass modal base ──────────────────────────────────────────────────── */
 .glass-modal {

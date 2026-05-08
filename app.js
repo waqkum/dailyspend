@@ -43,10 +43,17 @@ let ui = {
   view: 'home',            // 'home' | 'history' | 'settings'
   addRaw: '',              // raw digit string for numpad input e.g. "1240"
   addCategoryId: null,
+  addNote: '',             // one-time custom label for new expense
   editLimitVal: 50,
   colorPickerAccent: '#EEF4B0',
   historyFilter: 'all',
   selectedCurrency: 'USD',
+  // Edit-entry flow
+  editEntryId: null,
+  editRaw: '',
+  editCategoryId: null,
+  editNote: '',            // one-time custom label when editing
+  customCatContext: 'add', // 'add' | 'edit'
 };
 
 // ─── Persistence ─────────────────────────────────────────────────────────
@@ -446,13 +453,14 @@ function renderHome() {
     const row = document.createElement('div');
     row.className = 'today-entry';
     row.style.animationDelay = `${i * 40}ms`;
+    row.addEventListener('click', () => openEditEntry(e.id));
 
     const left = document.createElement('div');
     left.className = 'today-entry-left';
 
     const label = document.createElement('span');
     label.className = 'today-entry-label';
-    label.textContent = cat ? cat.label : 'Expense';
+    label.textContent = cat ? cat.label : (e.note || 'Expense');
 
     const time = document.createElement('span');
     time.className = 'today-entry-time';
@@ -572,8 +580,9 @@ function renderHistory() {
       const meta = document.createElement('span');
       meta.className = 'history-day-meta';
       if (filteredEntries.length === 1) {
-        const cat = state.categories.find(c => c.id === filteredEntries[0].categoryId);
-        meta.textContent = cat ? cat.label : '1 entry';
+        const e0 = filteredEntries[0];
+        const cat = state.categories.find(c => c.id === e0.categoryId);
+        meta.textContent = cat ? cat.label : (e0.note || '1 entry');
       } else {
         meta.textContent = filteredEntries.length + ' entries';
       }
@@ -619,7 +628,7 @@ function renderHistory() {
         eRow.className = 'history-entry-row';
 
         const eLabel = document.createElement('span');
-        eLabel.textContent = (cat ? cat.label : 'Expense') + (e.note ? ' — ' + e.note : '');
+        eLabel.textContent = cat ? cat.label : (e.note || 'Expense');
 
         const eAmt = document.createElement('span');
         eAmt.className = 'history-entry-amount';
@@ -709,16 +718,37 @@ function renderAddSheet() {
     chipsEl.innerHTML = '';
     state.categories.forEach(c => {
       const chip = document.createElement('button');
-      chip.className = 'cat-chip' + (ui.addCategoryId === c.id ? ' active' : '');
+      // Active only if selected AND no custom note overrides it
+      chip.className = 'cat-chip' + (ui.addCategoryId === c.id && !ui.addNote ? ' active' : '');
       chip.textContent = c.label;
       chip.addEventListener('click', () => {
         ui.addCategoryId = ui.addCategoryId === c.id ? null : c.id;
+        ui.addNote = ''; // clear custom note when picking a category
         renderAddSheet();
       });
       chipsEl.appendChild(chip);
     });
 
-    // (no inline add chip — categories are managed in Settings)
+    // + chip: compact when no note; expands as an active chip when note is set
+    const specialChip = document.createElement('button');
+    if (ui.addNote) {
+      specialChip.className = 'cat-chip active';
+      specialChip.textContent = ui.addNote;
+      specialChip.title = 'Tap to edit label';
+      specialChip.addEventListener('click', () => {
+        ui.customCatContext = 'add';
+        openCustomCatInput();
+      });
+    } else {
+      specialChip.className = 'cat-chip cat-chip-plus';
+      specialChip.textContent = '+';
+      specialChip.title = 'Add one-time label';
+      specialChip.addEventListener('click', () => {
+        ui.customCatContext = 'add';
+        openCustomCatInput();
+      });
+    }
+    chipsEl.appendChild(specialChip);
   }
 }
 
@@ -863,6 +893,7 @@ function closeOverlay(id) {
 function openAddSheet() {
   ui.addRaw = '';
   ui.addCategoryId = null;
+  ui.addNote = '';
   renderAddSheet();
 
   const sheet    = document.querySelector('.add-sheet');
@@ -931,8 +962,9 @@ function saveExpense() {
   state.entries.unshift({
     id: Date.now(),
     date: todayISO(),
-    categoryId: ui.addCategoryId || (state.categories[0] && state.categories[0].id) || null,
+    categoryId: ui.addNote ? null : (ui.addCategoryId || (state.categories[0] && state.categories[0].id) || null),
     amount: cents,
+    note: ui.addNote || '',
     createdAt: new Date().toISOString(),
   });
 
@@ -1046,6 +1078,213 @@ function resetData() {
   renderSettings();
 }
 
+// ─── Custom one-time label ────────────────────────────────────────────────
+function openCustomCatInput() {
+  const inputEl = document.getElementById('custom-cat-input');
+  if (inputEl) {
+    inputEl.value = ui.customCatContext === 'edit' ? ui.editNote : ui.addNote;
+    setTimeout(() => { inputEl.focus(); inputEl.select(); }, 80);
+  }
+  openOverlay('custom-cat-overlay');
+}
+
+function closeCustomCatInput() {
+  const inputEl = document.getElementById('custom-cat-input');
+  if (inputEl) inputEl.blur();
+  closeOverlay('custom-cat-overlay');
+}
+
+function saveCustomCat() {
+  const inputEl = document.getElementById('custom-cat-input');
+  const val = inputEl ? inputEl.value.trim() : '';
+  if (ui.customCatContext === 'edit') {
+    ui.editNote = val;
+    if (val) ui.editCategoryId = null; // note takes priority
+    renderEditSheet();
+  } else {
+    ui.addNote = val;
+    if (val) ui.addCategoryId = null;
+    renderAddSheet();
+  }
+  closeCustomCatInput();
+}
+
+// ─── Edit entry flow ──────────────────────────────────────────────────────
+function renderEditSheet() {
+  const valEl = document.getElementById('edit-amount-val');
+  if (valEl) valEl.textContent = rawToDisplay(ui.editRaw);
+
+  const dollarEl = document.getElementById('edit-amount-dollar');
+  if (dollarEl) dollarEl.textContent = state.currencySymbol;
+
+  const saveBtn = document.getElementById('edit-save-btn');
+  if (saveBtn) saveBtn.textContent = 'Save — ' + fmt(rawToCents(ui.editRaw));
+
+  const chipsEl = document.getElementById('edit-category-chips');
+  if (!chipsEl) return;
+  chipsEl.innerHTML = '';
+
+  state.categories.forEach(c => {
+    const chip = document.createElement('button');
+    chip.className = 'cat-chip' + (ui.editCategoryId === c.id && !ui.editNote ? ' active' : '');
+    chip.textContent = c.label;
+    chip.addEventListener('click', () => {
+      ui.editCategoryId = ui.editCategoryId === c.id ? null : c.id;
+      ui.editNote = '';
+      renderEditSheet();
+    });
+    chipsEl.appendChild(chip);
+  });
+
+  // + chip / active note chip
+  const specialChip = document.createElement('button');
+  if (ui.editNote) {
+    specialChip.className = 'cat-chip active';
+    specialChip.textContent = ui.editNote;
+    specialChip.title = 'Tap to edit label';
+    specialChip.addEventListener('click', () => {
+      ui.customCatContext = 'edit';
+      openCustomCatInput();
+    });
+  } else {
+    specialChip.className = 'cat-chip cat-chip-plus';
+    specialChip.textContent = '+';
+    specialChip.title = 'Add one-time label';
+    specialChip.addEventListener('click', () => {
+      ui.customCatContext = 'edit';
+      openCustomCatInput();
+    });
+  }
+  chipsEl.appendChild(specialChip);
+}
+
+function buildEditNumpad() {
+  const numpadEl = document.getElementById('edit-numpad');
+  if (!numpadEl) return;
+  numpadEl.innerHTML = '';
+  ['1','2','3','4','5','6','7','8','9','.','0','⌫'].forEach(k => {
+    const btn = document.createElement('button');
+    btn.className = 'numpad-key';
+    btn.textContent = k;
+    btn.addEventListener('click', () => {
+      if ('vibrate' in navigator) navigator.vibrate(8);
+      handleEditNumpadKey(k);
+    });
+    numpadEl.appendChild(btn);
+  });
+}
+
+function handleEditNumpadKey(k) {
+  if (k === '⌫') {
+    ui.editRaw = ui.editRaw.slice(0, -1);
+  } else if (k === '.') {
+    if (ui.editRaw === '') ui.editRaw = '0.';
+    else if (!ui.editRaw.includes('.')) ui.editRaw += '.';
+  } else {
+    const dotIdx = ui.editRaw.indexOf('.');
+    if (dotIdx === -1) {
+      if (ui.editRaw === '0') ui.editRaw = k;
+      else if (ui.editRaw.length >= 6) return;
+      else ui.editRaw += k;
+    } else {
+      if (ui.editRaw.length - dotIdx - 1 >= 2) return;
+      ui.editRaw += k;
+    }
+  }
+  renderEditSheet();
+}
+
+function openEditEntry(id) {
+  const entry = state.entries.find(e => e.id === id);
+  if (!entry) return;
+
+  ui.editEntryId = id;
+  // Reconstruct raw string from stored cents
+  const abs     = entry.amount;
+  const dollars = Math.floor(abs / 100);
+  const cents   = abs % 100;
+  ui.editRaw          = cents > 0 ? `${dollars}.${String(cents).padStart(2, '0')}` : `${dollars}`;
+  ui.editCategoryId   = entry.categoryId || null;
+  ui.editNote         = entry.note || '';
+
+  buildEditNumpad();
+  renderEditSheet();
+
+  const sheet    = document.querySelector('.edit-entry-sheet');
+  const overlay  = document.getElementById('edit-entry-overlay');
+  const backdrop = document.getElementById('edit-entry-backdrop');
+
+  overlay.classList.add('active');
+  if (backdrop) { backdrop.style.transition = 'none'; backdrop.style.opacity = '0'; }
+  sheet.style.transition = 'none';
+  sheet.style.transform  = 'translateY(100%)';
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      sheet.style.transition = 'transform 400ms cubic-bezier(0.32, 0.72, 0, 1)';
+      if (backdrop) { backdrop.style.transition = 'opacity 300ms ease'; backdrop.style.opacity = '1'; }
+      sheet.style.transform = 'translateY(0)';
+      setTimeout(() => {
+        sheet.style.transition = '';
+        sheet.style.transform  = '';
+        if (backdrop) backdrop.style.transition = '';
+      }, 410);
+    });
+  });
+}
+
+function closeEditEntry() {
+  const sheet    = document.querySelector('.edit-entry-sheet');
+  const overlay  = document.getElementById('edit-entry-overlay');
+  const backdrop = document.getElementById('edit-entry-backdrop');
+
+  if (backdrop) { backdrop.style.transition = 'opacity 300ms ease'; backdrop.style.opacity = '0'; }
+  sheet.style.transition = 'transform 320ms cubic-bezier(0.32, 0, 0.67, 0)';
+  sheet.style.transform  = 'translateY(100%)';
+
+  setTimeout(() => {
+    overlay.classList.remove('active');
+    sheet.style.transition = '';
+    sheet.style.transform  = '';
+    if (backdrop) { backdrop.style.transition = ''; backdrop.style.opacity = ''; }
+    ui.editEntryId = null;
+    // Reset delete button confirming state
+    const btn = document.getElementById('edit-delete-btn');
+    if (btn) {
+      btn.dataset.confirming = '';
+      btn.textContent = 'Delete';
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }
+  }, 340);
+}
+
+function saveEditEntry() {
+  const cents = rawToCents(ui.editRaw);
+  if (cents <= 0) return;
+  const idx = state.entries.findIndex(e => e.id === ui.editEntryId);
+  if (idx === -1) return;
+  state.entries[idx] = {
+    ...state.entries[idx],
+    amount:     cents,
+    categoryId: ui.editNote ? null : (ui.editCategoryId || null),
+    note:       ui.editNote || '',
+  };
+  saveState();
+  closeEditEntry();
+  _animateRingNext = true;
+  renderHome();
+}
+
+function deleteEditEntry() {
+  state.entries = state.entries.filter(e => e.id !== ui.editEntryId);
+  saveState();
+  closeEditEntry();
+  _animateRingNext = true;
+  renderHome();
+}
+
 // ─── Event listeners ──────────────────────────────────────────────────────
 function setupEvents() {
   // Navigation
@@ -1103,6 +1342,49 @@ function setupEvents() {
 
   // Add category button (in settings)
   document.getElementById('add-cat-btn').addEventListener('click', promptAddCategory);
+
+  // Custom one-time label overlay
+  document.getElementById('custom-cat-backdrop').addEventListener('click', closeCustomCatInput);
+  document.getElementById('custom-cat-cancel').addEventListener('click', closeCustomCatInput);
+  document.getElementById('custom-cat-done').addEventListener('click', saveCustomCat);
+  document.getElementById('custom-cat-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter')  saveCustomCat();
+    if (e.key === 'Escape') closeCustomCatInput();
+  });
+
+  // Edit entry overlay
+  document.getElementById('edit-entry-backdrop').addEventListener('click', closeEditEntry);
+  document.getElementById('edit-save-btn').addEventListener('click', saveEditEntry);
+  document.getElementById('edit-delete-btn').addEventListener('click', () => {
+    // Inline confirmation: swap button text to "Confirm delete"
+    const btn = document.getElementById('edit-delete-btn');
+    if (btn.dataset.confirming === 'true') {
+      deleteEditEntry();
+    } else {
+      btn.dataset.confirming = 'true';
+      btn.textContent = 'Confirm delete';
+      btn.style.background = '#c0392b';
+      btn.style.color = '#fff';
+      btn.style.borderColor = '#c0392b';
+      setTimeout(() => {
+        if (btn.dataset.confirming === 'true') {
+          btn.dataset.confirming = '';
+          btn.textContent = 'Delete';
+          btn.style.background = '';
+          btn.style.color = '';
+          btn.style.borderColor = '';
+        }
+      }, 3000);
+    }
+  });
+
+  // Tap grabber zone to close edit sheet
+  document.querySelector('.edit-entry-sheet').addEventListener('click', (e) => {
+    const overlay = document.getElementById('edit-entry-overlay');
+    if (!overlay.classList.contains('active')) return;
+    const sheet = document.querySelector('.edit-entry-sheet');
+    if (e.clientY - sheet.getBoundingClientRect().top < 60) closeEditEntry();
+  });
 }
 
 // ─── Swipe-to-dismiss sheet ───────────────────────────────────────────────

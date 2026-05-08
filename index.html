@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#F7F6EE">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="manifest" href="/manifest.json">
-  <link rel="stylesheet" href="style.css?v=25">
+  <link rel="stylesheet" href="style.css?v=32">
 </head>
 <body>
 <div id="app">
@@ -267,9 +267,47 @@
     </div>
   </div>
 
+  <!-- ─── Overlay: Custom one-time label ───────────────────────────────────── -->
+  <div id="custom-cat-overlay" class="overlay">
+    <div class="overlay-backdrop" id="custom-cat-backdrop"></div>
+    <div class="glass-modal">
+      <div class="glass-gloss"></div>
+      <div style="position:relative">
+        <div class="edit-limit-label">One-time label</div>
+        <input id="custom-cat-input" class="custom-cat-input"
+               type="text" placeholder="e.g. Socks" maxlength="32" autocomplete="off">
+        <div class="modal-actions">
+          <button class="btn-ghost" id="custom-cat-cancel">Cancel</button>
+          <button class="btn-ink" id="custom-cat-done">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Overlay: Edit expense entry ───────────────────────────────────────── -->
+  <div id="edit-entry-overlay" class="overlay">
+    <div class="overlay-backdrop" id="edit-entry-backdrop"></div>
+    <div class="edit-entry-sheet">
+      <div class="sheet-grabber"></div>
+      <div class="sheet-amount">
+        <div class="amount-display">
+          <span class="amount-dollar" id="edit-amount-dollar">$</span>
+          <span id="edit-amount-val">0</span>
+          <span class="amount-cursor"></span>
+        </div>
+      </div>
+      <div id="edit-category-chips" class="category-chips"></div>
+      <div id="edit-numpad" class="numpad"></div>
+      <div class="edit-entry-actions">
+        <button class="edit-delete-btn" id="edit-delete-btn">Delete</button>
+        <button class="track-btn" id="edit-save-btn">Save changes</button>
+      </div>
+    </div>
+  </div>
+
 </div><!-- #app -->
 
-<script src="app.js?v=20"></script>
+<script src="app.js?v=21"></script>
 <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js');
