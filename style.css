@@ -62,12 +62,35 @@
 
 /* Wash — very dark background, barely-there warm glow */
 [data-theme="dark"] .wash-hero { background: var(--cream); }
-[data-theme="dark"] .wash-hero::before {
-  background: rgba(220,219,202,0.055);
+[data-theme="dark"] .wash-hero::before { background: var(--accent-blob, var(--accent)); opacity: 0.22; }
+[data-theme="dark"] .wash-hero::after  { background: var(--accent-blob, var(--accent)); opacity: 0.14; filter: blur(65px); }
+
+/* ─── Blend shapes (two circles, multiply blend = third colour at overlap) ── */
+.wb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  filter: blur(18px);
+  opacity: 0;
+  transition: opacity 500ms cubic-bezier(0.16,1,0.3,1);
+  z-index: 0;
 }
-[data-theme="dark"] .wash-hero::after {
-  background: rgba(220,219,202,0.035);
+[data-blend] .wb { opacity: 1; }
+[data-blend] .wash-hero::before,
+[data-blend] .wash-hero::after { opacity: 0; transition: opacity 400ms; }
+.wb-a {
+  width: 72%; height: 68%; top: -12%; left: -8%;
+  background: var(--wb-a, transparent);
+  animation: wash-morph-a 24s ease-in-out infinite;
 }
+.wb-b {
+  width: 68%; height: 72%; bottom: -14%; right: -8%;
+  background: var(--wb-b, transparent);
+  animation: wash-morph-b 30s ease-in-out infinite;
+}
+[data-theme="dark"] .wb-a,
+[data-theme="dark"] .wb-b { mix-blend-mode: screen; }
 
 /* Grain — screen blend reads on dark backgrounds */
 [data-theme="dark"] .grain { mix-blend-mode: screen; opacity: 0.04; }
@@ -248,26 +271,26 @@ body {
   pointer-events: none;
   z-index: 0;
 }
-/* Primary blob — large, starts top-left, sweeps full canvas */
+/* Primary blob */
 .wash-hero::before {
   width: 95%;
   height: 80%;
   top: -18%;
   left: -8%;
-  background: var(--butter);
+  background: var(--accent-blob, var(--accent));
   border-radius: 60% 40% 55% 45% / 45% 55% 40% 60%;
   filter: blur(55px);
   animation: wash-morph-a 22s ease-in-out infinite;
 }
-/* Secondary blob — anchored bottom-left, sweeps to top-right and back */
+/* Secondary blob */
 .wash-hero::after {
   width: 80%;
   height: 85%;
   bottom: -24%;
   left: -18%;
-  background: var(--butter-soft);
+  background: var(--accent-blob, var(--accent));
   border-radius: 30% 70% 45% 55% / 55% 45% 70% 30%;
-  filter: blur(65px);
+  filter: blur(65px) brightness(1.12);
   animation: wash-morph-b 28s ease-in-out infinite;
 }
 .wash-hero > * { position: relative; z-index: 1; }
@@ -446,6 +469,45 @@ body {
   align-items: center;
   justify-content: center;
 }
+/* Glass disc inside the ring track */
+.ring-glass {
+  position: absolute;
+  inset: 9%;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.13);
+  backdrop-filter: blur(52px) saturate(190%) brightness(106%);
+  -webkit-backdrop-filter: blur(52px) saturate(190%) brightness(106%);
+  border: 1px solid rgba(255,255,255,0.42);
+  border-bottom-color: rgba(255,255,255,0.18);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,0.92),
+    inset 0 -0.5px 0 rgba(255,255,255,0.16),
+    0 8px 32px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+  pointer-events: none;
+}
+.ring-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(165deg,
+    rgba(255,255,255,0.26) 0%, rgba(255,255,255,0.06) 28%, rgba(255,255,255,0) 52%);
+  pointer-events: none;
+}
+[data-theme="dark"] .ring-glass {
+  background: rgba(255,255,255,0.048);
+  border-color: rgba(255,255,255,0.16);
+  border-bottom-color: rgba(255,255,255,0.07);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,0.38),
+    inset 0 -0.5px 0 rgba(255,255,255,0.06),
+    0 8px 40px rgba(0,0,0,0.48), 0 2px 8px rgba(0,0,0,0.28);
+}
+[data-theme="dark"] .ring-glass::before {
+  background: linear-gradient(165deg,
+    rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 28%, rgba(255,255,255,0) 52%);
+}
+.ring-amount-wrap { position: relative; z-index: 1; }
 .ring-amount-wrap {
   display: inline-flex;
   align-items: center;
@@ -813,18 +875,28 @@ body {
 .add-sheet {
   position: absolute;
   left: 0; right: 0; bottom: 0;
-  background: var(--cream);
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(52px) saturate(190%) brightness(106%);
+  -webkit-backdrop-filter: blur(52px) saturate(190%) brightness(106%);
+  border-top: 1px solid rgba(255,255,255,0.55);
   border-top-left-radius: 28px;
   border-top-right-radius: 28px;
   padding: 10px 22px 30px;
   display: flex;
   flex-direction: column;
   gap: 18px;
-  box-shadow: 0 -20px 40px rgba(0,0,0,0.18);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,0.92),
+    0 -8px 40px rgba(0,0,0,0.10);
   transform: translateY(100%);
   transition: transform 420ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 .overlay.active .add-sheet { transform: translateY(0); }
+[data-theme="dark"] .add-sheet {
+  background: rgba(12,12,10,0.82);
+  border-top-color: rgba(255,255,255,0.12);
+  box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.10), 0 -8px 40px rgba(0,0,0,0.50);
+}
 
 .sheet-grabber {
   width: 38px;
@@ -987,18 +1059,28 @@ body {
 .edit-entry-sheet {
   position: absolute;
   left: 0; right: 0; bottom: 0;
-  background: var(--cream);
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(52px) saturate(190%) brightness(106%);
+  -webkit-backdrop-filter: blur(52px) saturate(190%) brightness(106%);
+  border-top: 1px solid rgba(255,255,255,0.55);
   border-top-left-radius: 28px;
   border-top-right-radius: 28px;
   padding: 10px 22px 30px;
   display: flex;
   flex-direction: column;
   gap: 18px;
-  box-shadow: 0 -20px 40px rgba(0,0,0,0.18);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,0.92),
+    0 -8px 40px rgba(0,0,0,0.10);
   transform: translateY(100%);
   transition: transform 420ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 .overlay.active .edit-entry-sheet { transform: translateY(0); }
+[data-theme="dark"] .edit-entry-sheet {
+  background: rgba(12,12,10,0.82);
+  border-top-color: rgba(255,255,255,0.12);
+  box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.10), 0 -8px 40px rgba(0,0,0,0.50);
+}
 
 .edit-entry-actions {
   display: flex;
@@ -1026,7 +1108,7 @@ body {
 .today-entry { cursor: pointer; }
 .today-entry:active { opacity: 0.6; }
 
-/* ─── Glass modal base ──────────────────────────────────────────────────── */
+/* ─── Glass modal base (DailyConvert recipe) ─────────────────────────────── */
 .glass-modal {
   position: absolute;
   left: 22px; right: 22px;
@@ -1034,7 +1116,7 @@ body {
   transform: translateY(-50%) scale(0.96);
   border-radius: var(--r-tile);
   padding: 20px 22px;
-  background: rgba(247,246,238,0.72);
+  background: rgba(247,246,238,0.82);
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
   border: 1px solid rgba(11,11,11,0.10);
@@ -1048,6 +1130,12 @@ body {
   opacity: 1;
   transform: translateY(-50%) scale(1);
 }
+[data-theme="dark"] .glass-modal {
+  background: rgba(30,30,24,0.92);
+  border-color: rgba(220,219,202,0.10);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08),
+              0 24px 50px rgba(0,0,0,0.60);
+}
 .glass-gloss {
   position: absolute;
   inset: 0;
@@ -1055,6 +1143,11 @@ body {
   pointer-events: none;
   background: linear-gradient(180deg,
     rgba(255,255,255,0.45) 0%,
+    rgba(255,255,255,0) 50%);
+}
+[data-theme="dark"] .glass-gloss {
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.06) 0%,
     rgba(255,255,255,0) 50%);
 }
 
@@ -1531,26 +1624,37 @@ body {
   text-transform: uppercase;
   color: var(--ink-muted);
   margin-bottom: 10px;
+  position: relative;
+  z-index: 1;
 }
 .accent-swatches {
-  display: flex;
-  gap: 10px;
-  justify-content: space-between;
-  margin-bottom: 22px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+  margin-bottom: 6px;
+  position: relative;
+  z-index: 1;
 }
+.accent-swatches + .accent-section-label { margin-top: 16px; }
 .accent-swatch {
-  width: 38px;
-  height: 38px;
+  height: 40px;
   border-radius: var(--r-pill);
   border: 1.5px solid rgba(11,11,11,0.18);
   cursor: pointer;
   transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
-  flex-shrink: 0;
 }
 .accent-swatch.active {
-  border: 2px solid var(--ink);
+  border: 2.5px solid var(--ink);
   box-shadow: inset 0 0 0 3px var(--cream);
 }
+/* Dark swatches need light border to be visible against their own colour */
+.accent-swatches-dark .accent-swatch { border-color: rgba(255,255,255,0.14); }
+.accent-swatches-dark .accent-swatch.active {
+  border-color: rgba(255,255,255,0.65);
+  box-shadow: inset 0 0 0 3px rgba(0,0,0,0.55);
+}
+[data-theme="dark"] .accent-swatch { border-color: rgba(220,219,202,0.22); }
+[data-theme="dark"] .accent-swatch.active { box-shadow: inset 0 0 0 3px #070706; }
 
 /* ─── Animations ────────────────────────────────────────────────────────── */
 @keyframes blink { 50% { opacity: 0; } }

@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#F7F6EE">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="manifest" href="/manifest.json">
-  <link rel="stylesheet" href="style.css?v=32">
+  <link rel="stylesheet" href="style.css?v=33">
 </head>
 <body>
 <div id="app">
@@ -16,6 +16,8 @@
   <!-- ─── View: Home ──────────────────────────────────────────────────── -->
   <div id="home-view" class="view wash-hero active">
     <div class="grain"></div>
+    <div class="wb wb-a"></div>
+    <div class="wb wb-b"></div>
 
     <header class="home-header">
       <span class="home-title">Daily Spend</span>
@@ -47,6 +49,7 @@
               visibility="hidden"/>
           </svg>
           <div class="ring-center">
+            <div class="ring-glass"></div>
             <div class="ring-amount-wrap">
               <span id="ring-dollar" class="ring-dollar">$</span>
               <span id="home-remaining" class="ring-amount">0</span><span id="home-remaining-cents" class="ring-cents"></span>
@@ -239,8 +242,14 @@
         <div class="color-modal-header">
           <span class="color-modal-title">Color</span>
         </div>
-        <div class="accent-section-label">Accent</div>
-        <div id="accent-swatches" class="accent-swatches"></div>
+        <div class="accent-section-label">Light</div>
+        <div id="accent-swatches-light" class="accent-swatches"></div>
+        <div class="accent-section-label">Gradient</div>
+        <div id="accent-swatches-grad" class="accent-swatches"></div>
+        <div class="accent-section-label">Blend</div>
+        <div id="accent-swatches-blend" class="accent-swatches"></div>
+        <div class="accent-section-label">Dark</div>
+        <div id="accent-swatches-dark" class="accent-swatches accent-swatches-dark"></div>
         <div class="modal-actions">
           <button class="btn-ghost" id="color-cancel">Cancel</button>
           <button class="btn-ink" id="color-save">Apply</button>
@@ -307,7 +316,7 @@
 
 </div><!-- #app -->
 
-<script src="app.js?v=21"></script>
+<script src="app.js?v=22"></script>
 <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js');

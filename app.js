@@ -8,7 +8,44 @@ const DEFAULT_CATEGORIES = [
   { id: 'groceries', label: 'Groceries' },
 ];
 
-const ACCENT_OPTIONS = ['#EEF4B0', '#C9F2A0', '#F4C8B0', '#B0D4F4', '#E8B0F4', '#0B0B0B'];
+// ─── Colour system (ported from DailyConvert) ─────────────────────────────
+// 3 solid light accents kept from DailySpend; gradient/blend/dark from DailyConvert exactly.
+const LIGHT_ACCENTS = ['#F4C8B0', '#EEF4B0', '#B0D4F4']; // pink, butter, blue
+
+const DARK_ACCENTS = ['#1E1E1E', '#0A1628', '#180E2A'];
+
+const GRADIENT_ACCENTS = ['grad-sunset', 'grad-aurora', 'grad-dusk'];
+
+const BLEND_THEMES = {
+  'blend-flame':    { wa: '#FF9070', wb: '#FFD060', accent: '#FF8050', cream: '#FBF0EC', haze: '#DED9D5', swatch: 'linear-gradient(135deg, #FF9070 50%, #FFD060 50%)' },
+  'blend-tide':     { wa: '#5EC8C0', wb: '#8090E0', accent: '#5AB8D0', cream: '#EEF4F6', haze: '#D4DADC', swatch: 'linear-gradient(135deg, #5EC8C0 50%, #8090E0 50%)' },
+  'blend-grove':    { wa: '#88D470', wb: '#E08AB8', accent: '#70C060', cream: '#F0F6EE', haze: '#D6DCD5', swatch: 'linear-gradient(135deg, #88D470 50%, #E08AB8 50%)' },
+  'blend-citrus':   { wa: '#F0E060', wb: '#80E860', accent: '#A0C840', cream: '#F6F6E8', haze: '#DCDDD0', swatch: 'linear-gradient(135deg, #F0E060 50%, #80E860 50%)' },
+  'blend-twilight': { wa: '#7060E0', wb: '#E06090', accent: '#9060C0', cream: '#F4EEF8', haze: '#D8D0DC', swatch: 'linear-gradient(135deg, #7060E0 50%, #E06090 50%)' },
+  'blend-sherbet':  { wa: '#FF8840', wb: '#C098F0', accent: '#E07840', cream: '#FAF0EC', haze: '#DDDAD8', swatch: 'linear-gradient(135deg, #FF8840 50%, #C098F0 50%)' },
+};
+const BLEND_ACCENTS = Object.keys(BLEND_THEMES);
+
+const GRADIENT_THEMES = {
+  'grad-sunset': { blob: 'linear-gradient(135deg, #F4A0C0, #F4D080)', accent: '#F4A0B8', cream: '#FAF0EE', haze: '#DDD6D0' },
+  'grad-aurora': { blob: 'linear-gradient(135deg, #80ECD0, #80C4F4)', accent: '#80C0F0', cream: '#EEF6F8', haze: '#D2DADC' },
+  'grad-dusk':   { blob: 'linear-gradient(135deg, #C080F0, #F080B4)', accent: '#C080EC', cream: '#F5EEF9', haze: '#D8D2DC' },
+};
+
+const DARK_THEMES = {
+  '#1E1E1E': { cream: '#080808', haze: '#111111', accent: '#C0C0B8' },
+  '#0A1628': { cream: '#050A12', haze: '#0C1620', accent: '#8BB4D0' },
+  '#180E2A': { cream: '#0C0814', haze: '#140C1E', accent: '#B090D4' },
+};
+
+const LIGHT_THEMES = {
+  '#F4C8B0': { cream: '#FBF2EE', haze: '#DDD8D5' },
+  '#EEF4B0': { cream: '#F7F6EE', haze: '#DDDDD8' },
+  '#B0D4F4': { cream: '#EEF4FB', haze: '#D3D9DE' },
+};
+
+const ACCENTS = [...LIGHT_ACCENTS, ...GRADIENT_ACCENTS, ...BLEND_ACCENTS, ...DARK_ACCENTS];
+
 const CURRENCIES = [
   { code: 'USD', symbol: '$',  label: 'USD — $  US Dollar' },
   { code: 'EUR', symbol: '€',  label: 'EUR — €  Euro' },
@@ -18,22 +55,12 @@ const CURRENCIES = [
   { code: 'CAD', symbol: 'C$', label: 'CAD — C$  Canadian Dollar' },
 ];
 
-// ─── Light theme palettes ─────────────────────────────────────────────────
-// Each accent colour gets a coordinated background tint (--cream) and wash
-// gradient colours (--butter / --butter-soft) so the whole UI feels tinted.
-const LIGHT_THEMES = {
-  '#EEF4B0': { cream: '#F7F6EE', haze: '#DDDDD8', butter: '#EEF4B0', butterSoft: '#F4F6C8' }, // Butter (default)
-  '#C9F2A0': { cream: '#F2F9EE', haze: '#D6DDD3', butter: '#C9F2A0', butterSoft: '#DAF5C4' }, // Green
-  '#F4C8B0': { cream: '#FBF2EE', haze: '#DDD8D5', butter: '#F4C8B0', butterSoft: '#F8DDD0' }, // Peach
-  '#B0D4F4': { cream: '#EEF4FB', haze: '#D3D9DE', butter: '#B0D4F4', butterSoft: '#CAE4F8' }, // Blue
-  '#E8B0F4': { cream: '#F7EDF9', haze: '#D9D3DE', butter: '#E8B0F4', butterSoft: '#F1D0F8' }, // Lavender
-};
 
 let state = {
   dailyLimit: 50,
   currency: 'USD',
   currencySymbol: '$',
-  accent: '#EEF4B0',
+  accent: '#EEF4B0',   // default: butter
   categories: DEFAULT_CATEGORIES.slice(),
   entries: [], // { id, date:'YYYY-MM-DD', categoryId, amount:cents, createdAt:ISO }
 };
@@ -211,40 +238,62 @@ function animateCounter(el, fromCents, toCents, duration = 500) {
 
 // ─── Accent / theme ──────────────────────────────────────────────────────
 
-// Returns the visual accent colour currently in use.
-// When dark mode is active (black swatch selected) the CSS accent is butter,
-// so inline JS colour references should match.
 function getAccent() {
-  return state.accent === '#0B0B0B' ? '#C8C8A0' : state.accent;
+  const dark  = DARK_THEMES[state.accent];
+  if (dark)  return dark.accent;
+  const grad  = GRADIENT_THEMES[state.accent];
+  if (grad)  return grad.accent;
+  const blend = BLEND_THEMES[state.accent];
+  if (blend) return blend.accent;
+  return state.accent;
 }
 
-function applyAccent(hex) {
-  const isDark = hex === '#0B0B0B';
-  const root   = document.documentElement;
+function applyAccent(key) {
+  const dark  = DARK_THEMES[key];
+  const grad  = GRADIENT_THEMES[key];
+  const blend = BLEND_THEMES[key];
+  const root  = document.documentElement;
 
-  // Always clear any previously applied inline theme properties
-  ['--cream', '--haze', '--butter', '--butter-soft', '--accent'].forEach(p => {
-    root.style.removeProperty(p);
-  });
+  ['--cream','--haze','--accent','--accent-blob','--wb-a','--wb-b'].forEach(p =>
+    root.style.removeProperty(p));
+  root.removeAttribute('data-blend');
 
-  if (isDark) {
+  if (dark) {
     root.setAttribute('data-theme', 'dark');
-    root.style.setProperty('--accent', '#C8C8A0');
+    root.style.setProperty('--accent', dark.accent);
+    root.style.setProperty('--cream',  dark.cream);
+    root.style.setProperty('--haze',   dark.haze);
+  } else if (blend) {
+    root.removeAttribute('data-theme');
+    root.setAttribute('data-blend', '1');
+    root.style.setProperty('--accent', blend.accent);
+    root.style.setProperty('--cream',  blend.cream);
+    root.style.setProperty('--haze',   blend.haze);
+    root.style.setProperty('--wb-a',   blend.wa);
+    root.style.setProperty('--wb-b',   blend.wb);
+  } else if (grad) {
+    root.removeAttribute('data-theme');
+    root.style.setProperty('--accent',      grad.accent);
+    root.style.setProperty('--accent-blob', grad.blob);
+    root.style.setProperty('--cream',       grad.cream);
+    root.style.setProperty('--haze',        grad.haze);
   } else {
     root.removeAttribute('data-theme');
-    const t = LIGHT_THEMES[hex] || LIGHT_THEMES['#EEF4B0'];
-    root.style.setProperty('--accent',      hex);
-    root.style.setProperty('--cream',       t.cream);
-    root.style.setProperty('--haze',        t.haze);
-    root.style.setProperty('--butter',      t.butter);
-    root.style.setProperty('--butter-soft', t.butterSoft);
+    const t = LIGHT_THEMES[key] || LIGHT_THEMES['#EEF4B0'];
+    root.style.setProperty('--accent', key);
+    root.style.setProperty('--cream',  t.cream);
+    root.style.setProperty('--haze',   t.haze);
   }
 
-  // Keep the swatch dot in settings in sync
-  const displayHex = isDark ? '#C8C8A0' : hex;
-  document.querySelectorAll('.color-swatch-dot').forEach(el => {
-    el.style.background = displayHex;
-  });
+  syncColorDot();
+}
+
+function syncColorDot() {
+  const key   = state.accent;
+  const grad  = GRADIENT_THEMES[key];
+  const blend = BLEND_THEMES[key];
+  const bg    = grad ? grad.blob : blend ? blend.swatch : (DARK_THEMES[key] ? DARK_THEMES[key].accent : key);
+  document.querySelectorAll('.color-swatch-dot').forEach(el => el.style.background = bg);
 }
 
 // ─── DS Logo component ────────────────────────────────────────────────────
@@ -852,30 +901,37 @@ function deleteCategory(id) {
   renderSettings();
 }
 
-// ─── Accent swatches ──────────────────────────────────────────────────────
+// ─── Accent swatches (4 groups matching DailyConvert) ────────────────────
 function buildAccentSwatches() {
-  const el = document.getElementById('accent-swatches');
-  if (!el) return;
-  el.innerHTML = '';
-  ACCENT_OPTIONS.forEach(hex => {
-    const sw = document.createElement('button');
-    sw.className = 'accent-swatch' + (ui.colorPickerAccent === hex ? ' active' : '');
-    sw.style.background = hex;
-    sw.addEventListener('click', () => {
-      ui.colorPickerAccent = hex;
-      el.querySelectorAll('.accent-swatch').forEach(s => {
-        s.classList.toggle('active', s.style.background === hexToRgb(hex) || s.style.background === hex);
-      });
-      // Refresh so box-shadow uses correct color var
-      buildAccentSwatches();
-    });
-    el.appendChild(sw);
-  });
-}
+  const ALL_GRID_IDS = ['accent-swatches-light','accent-swatches-grad','accent-swatches-blend','accent-swatches-dark'];
 
-function hexToRgb(hex) {
-  // browsers normalize hex to rgb() when reading style.background
-  return hex; // comparison handled via rebuild
+  function populateGrid(gridId, accents) {
+    const wrap = document.getElementById(gridId);
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    accents.forEach(key => {
+      const grad  = GRADIENT_THEMES[key];
+      const blend = BLEND_THEMES[key];
+      const btn   = document.createElement('button');
+      btn.className  = 'accent-swatch' + (key === ui.colorPickerAccent ? ' active' : '');
+      btn.style.background = grad ? grad.blob : blend ? blend.swatch : key;
+      btn.dataset.color = key;
+      btn.addEventListener('click', () => {
+        ui.colorPickerAccent = key;
+        ALL_GRID_IDS.forEach(id =>
+          document.getElementById(id)?.querySelectorAll('.accent-swatch')
+            .forEach(sw => sw.classList.remove('active'))
+        );
+        btn.classList.add('active');
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  populateGrid('accent-swatches-light', LIGHT_ACCENTS);
+  populateGrid('accent-swatches-grad',  GRADIENT_ACCENTS);
+  populateGrid('accent-swatches-blend', BLEND_ACCENTS);
+  populateGrid('accent-swatches-dark',  DARK_ACCENTS);
 }
 
 // ─── Overlay helpers ──────────────────────────────────────────────────────
@@ -1015,6 +1071,7 @@ function openColorPicker() {
   openOverlay('color-overlay');
 }
 
+
 function closeColorPicker() {
   closeOverlay('color-overlay');
 }
@@ -1025,6 +1082,7 @@ function saveAccent() {
   applyAccent(state.accent);
   renderHome();
   renderSettings();
+  syncColorDot();
   closeColorPicker();
 }
 
