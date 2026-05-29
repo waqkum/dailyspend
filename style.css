@@ -82,12 +82,12 @@
 .wb-a {
   width: 72%; height: 68%; top: -12%; left: -8%;
   background: var(--wb-a, transparent);
-  animation: wash-morph-a 24s ease-in-out infinite;
+  animation: wash-a 24s ease-in-out infinite;
 }
 .wb-b {
   width: 68%; height: 72%; bottom: -14%; right: -8%;
   background: var(--wb-b, transparent);
-  animation: wash-morph-b 30s ease-in-out infinite;
+  animation: wash-b 30s ease-in-out infinite;
 }
 [data-theme="dark"] .wb-a,
 [data-theme="dark"] .wb-b { mix-blend-mode: screen; }
@@ -294,6 +294,8 @@ body {
   animation: wash-morph-b 28s ease-in-out infinite;
 }
 .wash-hero > * { position: relative; z-index: 1; }
+/* Blend shapes must stay absolute and below content despite the rule above */
+.wash-hero > .wb { position: absolute; z-index: 0; }
 
 @keyframes wash-morph-a {
   0%   {
@@ -348,6 +350,22 @@ body {
     border-radius: 30% 70% 45% 55% / 55% 45% 70% 30%;
     filter: blur(65px) hue-rotate(10deg);
   }
+}
+
+/* ─── Blend shape keyframes (copied verbatim from DailyConvert) ─────────── */
+@keyframes wash-a {
+  0%   { transform:translate(0,0) scale(1);         border-radius:60% 40% 55% 45%/45% 55% 40% 60%; }
+  25%  { transform:translate(22%,-14%) scale(1.18); border-radius:25% 75% 30% 70%/75% 25% 65% 35%; }
+  50%  { transform:translate(14%,24%) scale(0.87);  border-radius:78% 22% 68% 32%/18% 82% 28% 72%; }
+  75%  { transform:translate(-10%,16%) scale(1.13); border-radius:22% 78% 38% 62%/62% 38% 80% 20%; }
+  100% { transform:translate(0,0) scale(1);         border-radius:60% 40% 55% 45%/45% 55% 40% 60%; }
+}
+@keyframes wash-b {
+  0%   { transform:translate(0,0) scale(1);          border-radius:30% 70% 45% 55%/55% 45% 70% 30%; }
+  25%  { transform:translate(48%,-35%) scale(0.86);  border-radius:72% 28% 60% 40%/28% 72% 38% 62%; }
+  50%  { transform:translate(62%,-52%) scale(1.16);  border-radius:20% 80% 35% 65%/68% 32% 75% 25%; }
+  75%  { transform:translate(28%,-18%) scale(0.92);  border-radius:65% 35% 22% 78%/32% 68% 55% 45%; }
+  100% { transform:translate(0,0) scale(1);          border-radius:30% 70% 45% 55%/55% 45% 70% 30%; }
 }
 
 /* ─── Grain overlay ─────────────────────────────────────────────────────── */
@@ -469,45 +487,6 @@ body {
   align-items: center;
   justify-content: center;
 }
-/* Glass disc inside the ring track */
-.ring-glass {
-  position: absolute;
-  inset: 9%;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.13);
-  backdrop-filter: blur(52px) saturate(190%) brightness(106%);
-  -webkit-backdrop-filter: blur(52px) saturate(190%) brightness(106%);
-  border: 1px solid rgba(255,255,255,0.42);
-  border-bottom-color: rgba(255,255,255,0.18);
-  box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,0.92),
-    inset 0 -0.5px 0 rgba(255,255,255,0.16),
-    0 8px 32px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
-  pointer-events: none;
-}
-.ring-glass::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(165deg,
-    rgba(255,255,255,0.26) 0%, rgba(255,255,255,0.06) 28%, rgba(255,255,255,0) 52%);
-  pointer-events: none;
-}
-[data-theme="dark"] .ring-glass {
-  background: rgba(255,255,255,0.048);
-  border-color: rgba(255,255,255,0.16);
-  border-bottom-color: rgba(255,255,255,0.07);
-  box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,0.38),
-    inset 0 -0.5px 0 rgba(255,255,255,0.06),
-    0 8px 40px rgba(0,0,0,0.48), 0 2px 8px rgba(0,0,0,0.28);
-}
-[data-theme="dark"] .ring-glass::before {
-  background: linear-gradient(165deg,
-    rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 28%, rgba(255,255,255,0) 52%);
-}
-.ring-amount-wrap { position: relative; z-index: 1; }
 .ring-amount-wrap {
   display: inline-flex;
   align-items: center;
